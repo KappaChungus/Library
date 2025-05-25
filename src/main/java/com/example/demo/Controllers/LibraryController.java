@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/data")
 public class LibraryController {
     private final BookRepository bookRepository;
     private final BorrowingRepository borrowingRepository;
@@ -79,6 +78,7 @@ public class LibraryController {
         if (!book.isAvailable()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Book is not available");
         }
+
 
         book.setAvailable(false);
         bookRepository.save(book);
@@ -143,7 +143,6 @@ public class LibraryController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody User request) {
         User user = userRepository.getFirstByEmail(request.getEmail());
-
         if (user == null || !user.getPassword().equals(request.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid email or password"));
