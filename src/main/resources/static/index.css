@@ -1,0 +1,86 @@
+/* index.css - oba tryby w jednym pliku */
+
+/* ---- Tryb jasny (domyślny) ---- */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background: #f9f9f9;
+    color: #333;
+    flex-direction: column;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 300px;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+input, button {
+    margin-top: 10px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: white;
+    color: #333;
+    border: 1px solid #ccc;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+input::placeholder {
+    color: #666;
+}
+
+button:hover {
+    background-color: #eee;
+    cursor: pointer;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* ---- Tryb ciemny aktywowany klasą .dark-mode ---- */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode form {
+    background-color: #1e1e1e;
+    border-color: #444;
+}
+
+body.dark-mode input,
+body.dark-mode button {
+    background-color: #333;
+    color: #eee;
+    border: 1px solid #555;
+}
+
+body.dark-mode input::placeholder {
+    color: #aaa;
+}
+
+body.dark-mode button:hover {
+    background-color: #555;
+    cursor: pointer;
+}
+
+body.dark-mode .error {
+    color: #ff6666;
+}

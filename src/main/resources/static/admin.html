@@ -3,66 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Admina</title>
-    <style>
-        th:nth-child(3) {
-            width: 130px;
-            white-space: nowrap;
-        }
-        #availability-filter {
-            display: inline-block;
-            width: 130px;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-
-        h2 {
-            margin-top: 30px;
-            cursor: pointer;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        .section-content {
-            display: none;
-            margin-top: 10px;
-        }
-    body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-        }
-        h2 {
-            margin-top: 30px;
-        }
-        form {
-            margin-bottom: 30px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            width: 300px;
-        }
-        input, select, button {
-            display: block;
-            margin-top: 10px;
-            padding: 5px;
-            width: 100%;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-        }
-        th {
-            background-color: #eee;
-        }
-
-    </style>
+    <link rel="stylesheet" href="/admin.css"/>
+    <link rel="stylesheet" href="/dark-mode-toggle.css" />
 </head>
 <body>
+
 <h1>Panel Administratora</h1>
+
+<!-- Przycisk trybu ciemnego/ jasnego -->
+<button id="dark-mode-toggle">🌙</button>
 
 <h2 onclick="toggleSection('user-section')">➕ Dodaj użytkownika</h2>
 <div id="user-section" class="section-content">
@@ -112,11 +61,8 @@
                     Wszystkie
                 </button>
             </th>
-
         </tr>
         </thead>
-
-
         <tbody>
         <tr><td colspan="3">Ładowanie książek...</td></tr>
         </tbody>
@@ -127,7 +73,6 @@
     let allBooks = [];
     let currentSortField = 'title';
     let availabilityFilter = 'all';
-
 
     (function verifyAdminAccess() {
         const token = localStorage.getItem('jwtToken');
@@ -153,6 +98,15 @@
     })();
 
     window.onload = () => {
+        // Przywróć tryb ciemny jeśli ustawiony
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        } else {
+            darkModeToggle.textContent = '🌙';
+        }
+
         // Ładowanie użytkowników do selecta
         fetch('/users')
             .then(res => res.json())
@@ -169,6 +123,19 @@
         // Ładowanie książek domyślnie po tytule
         loadBooks('title');
     };
+
+    document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+        const btn = document.getElementById('dark-mode-toggle');
+        if (document.body.classList.contains('dark-mode')) {
+            document.body.classList.remove('dark-mode');
+            btn.textContent = '🌙';
+            localStorage.setItem('darkMode', 'disabled');
+        } else {
+            document.body.classList.add('dark-mode');
+            btn.textContent = '☀️';
+            localStorage.setItem('darkMode', 'enabled');
+        }
+    });
 
     // Funkcja ładująca książki z backendu
     function loadBooks(sortBy = 'title') {

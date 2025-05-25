@@ -1,0 +1,94 @@
+/* --- Jasny tryb (domyślny) --- */
+
+th:nth-child(3) {
+    width: 130px;
+    white-space: nowrap;
+}
+#availability-filter {
+    display: inline-block;
+    width: 130px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+h2 {
+    margin-top: 30px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+.section-content {
+    display: none;
+    margin-top: 10px;
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background-color: white;
+    color: black;
+}
+form {
+    margin-bottom: 30px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    width: 300px;
+    background-color: white;
+}
+input, select, button {
+    display: block;
+    margin-top: 10px;
+    padding: 5px;
+    width: 100%;
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 15px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+th {
+    background-color: #eee;
+}
+
+/* --- Tryb ciemny (aktywowany przez .dark-mode) --- */
+
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode form {
+    background-color: #1e1e1e;
+    border-color: #444;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode button {
+    background-color: #333;
+    color: #eee;
+    border: 1px solid #555;
+}
+
+body.dark-mode th,
+body.dark-mode td {
+    border-color: #555;
+}
+
+body.dark-mode th {
+    background-color: #222;
+}
+
+body.dark-mode h2 {
+    background-color: #222;
+    border-color: #444;
+}
+

@@ -1,0 +1,61 @@
+/* Tryb jasny (domyślny) */
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background-color: white;
+    color: black;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+th {
+    background-color: #eee;
+}
+
+button {
+    padding: 5px 10px;
+}
+
+/* Styl dla elementów z klasą overdue */
+.overdue {
+    background-color: #f8d7da !important;
+}
+
+/* --- Tryb ciemny --- */
+body.dark-mode {
+    background-color: #121212;
+    color: #ddd;
+}
+
+body.dark-mode table,
+body.dark-mode th,
+body.dark-mode td {
+    border-color: #444;
+}
+
+body.dark-mode th {
+    background-color: #333;
+}
+
+body.dark-mode .overdue {
+    background-color: #8b3b3f !important; /* ciemniejszy odcień czerwieni */
+}
+
+body.dark-mode button {
+    background-color: #333;
+    color: #ddd;
+    border: 1px solid #555;
+}
