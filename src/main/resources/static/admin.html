@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Admina</title>
+    <style>
+        th:nth-child(3) {
+            width: 130px;
+            white-space: nowrap;
+        }
+        #availability-filter {
+            display: inline-block;
+            width: 130px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+
+        h2 {
+            margin-top: 30px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .section-content {
+            display: none;
+            margin-top: 10px;
+        }
+    body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h2 {
+            margin-top: 30px;
+        }
+        form {
+            margin-bottom: 30px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 300px;
+        }
+        input, select, button {
+            display: block;
+            margin-top: 10px;
+            padding: 5px;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        th {
+            background-color: #eee;
+        }
+
+    </style>
+</head>
+<body>
+<h1>Panel Administratora</h1>
+
+<h2 onclick="toggleSection('user-section')">➕ Dodaj użytkownika</h2>
+<div id="user-section" class="section-content">
+    <form id="user-form">
+        <input name="name" placeholder="Imię" required>
+        <input name="surname" placeholder="Nazwisko" required>
+        <input name="email" placeholder="Email" type="email" required>
+        <input name="password" placeholder="Hasło" type="password" required>
+        <button type="submit">Dodaj użytkownika</button>
+    </form>
+</div>
+
+<h2 onclick="toggleSection('book-section')">📚 Dodaj książkę</h2>
+<div id="book-section" class="section-content">
+    <form id="book-form">
+        <input name="title" placeholder="Tytuł" required>
+        <input name="author" placeholder="Autor" required>
+        <button type="submit">Dodaj książkę</button>
+    </form>
+</div>
+
+<h2 onclick="toggleSection('user-search-section')">🔍 Wyszukaj użytkownika</h2>
+<div id="user-search-section" class="section-content">
+    <form id="user-redirect">
+        <select id="user-select-redirect" required>
+            <option value="">Wybierz użytkownika</option>
+        </select>
+        <button type="submit">Przejdź do profilu</button>
+    </form>
+</div>
+
+<h2 onclick="toggleSection('books-list-section')">📖 Lista wszystkich książek</h2>
+<div id="books-list-section" class="section-content">
+    <table id="books-table">
+        <thead>
+        <tr>
+            <th>
+                <input type="text" id="filter-title" placeholder="Filtruj tytuł..." style="width: 90%; margin-top: 5px;">
+                <button class="sort-btn" data-field="title" aria-label="Sortuj po tytule" style="background:none; border:none; cursor:pointer;">▲</button><br>
+            </th>
+            <th>
+                <input type="text" id="filter-author" placeholder="Filtruj autora..." style="width: 90%; margin-top: 5px;">
+                <button class="sort-btn" data-field="author" aria-label="Sortuj po autorze" style="background:none; border:none; cursor:pointer;">▲</button><br>
+            </th>
+            <th>
+                <button id="availability-filter" aria-label="Filtruj po dostępności" style="background:none; border:none; cursor:pointer; font-weight:bold;">
+                    Wszystkie
+                </button>
+            </th>
+
+        </tr>
+        </thead>
+
+
+        <tbody>
+        <tr><td colspan="3">Ładowanie książek...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let allBooks = [];
+    let currentSortField = 'title';
+    let availabilityFilter = 'all';
+
+
+    (function verifyAdminAccess() {
+        const token = localStorage.getItem('jwtToken');
+
+        if (!token) {
+            alert('Brak autoryzacji. Zaloguj się jako administrator.');
+            window.location.href = '/index.html';
+            return;
+        }
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+
+            if (payload.role !== 'admin') {
+                alert('Brak dostępu. Musisz być administratorem.');
+                window.location.href = '/index.html';
+            }
+        } catch (e) {
+            alert('Nieprawidłowy token. Zaloguj się ponownie.');
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/index.html';
+        }
+    })();
+
+    window.onload = () => {
+        // Ładowanie użytkowników do selecta
+        fetch('/users')
+            .then(res => res.json())
+            .then(users => {
+                const userRedirectSelect = document.getElementById('user-select-redirect');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.email} – ${user.name}`;
+                    userRedirectSelect.appendChild(option);
+                });
+            });
+
+        // Ładowanie książek domyślnie po tytule
+        loadBooks('title');
+    };
+
+    // Funkcja ładująca książki z backendu
+    function loadBooks(sortBy = 'title') {
+        fetch(`/books?sortBy=${sortBy}`)
+            .then(res => res.json())
+            .then(books => {
+                allBooks = books;
+                currentSortField = sortBy;
+                renderBooksTable();
+            });
+    }
+
+    document.getElementById('filter-title').addEventListener('input', renderBooksTable);
+    document.getElementById('filter-author').addEventListener('input', renderBooksTable);
+
+    // Renderowanie tabeli książek
+    function renderBooksTable() {
+        const tbody = document.querySelector('#books-table tbody');
+        tbody.innerHTML = '';
+
+        const filterTitle = document.getElementById('filter-title').value.toLowerCase();
+        const filterAuthor = document.getElementById('filter-author').value.toLowerCase();
+
+        // Filtrowanie lokalne na już pobranych danych
+        const filteredBooks = allBooks.filter(book =>
+            book.title.toLowerCase().includes(filterTitle) &&
+            book.author.toLowerCase().includes(filterAuthor) &&
+            (availabilityFilter === 'all' ||
+                (availabilityFilter === 'available' && book.available) ||
+                (availabilityFilter === 'borrowed' && !book.available))
+        );
+
+
+        if (filteredBooks.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3">Brak wyników.</td></tr>';
+            return;
+        }
+
+
+        filteredBooks.forEach(book => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.available ? '✅' : '❌'}</td>
+        `;
+            tbody.appendChild(tr);
+        });
+
+        updateSortButtons();
+    }
+
+
+    // Aktualizacja wyglądu strzałek sortowania
+    function updateSortButtons() {
+        document.querySelectorAll('.sort-btn').forEach(button => {
+            const field = button.dataset.field;
+            if (field === currentSortField) {
+                button.style.color = 'black';  // aktywna strzałka
+                button.textContent = '▲';
+            } else {
+                button.style.color = '#ccc';   // nieaktywna strzałka szara
+                button.textContent = '▲';
+            }
+        });
+    }
+
+    // Obsługa kliknięć w sortowanie
+    document.querySelectorAll('.sort-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const field = button.dataset.field;
+            if (field !== currentSortField) {
+                loadBooks(field);
+            }
+            // jeśli kliknięto na aktualne sortowanie, nic się nie zmienia, bo backend sortuje tylko ASC
+        });
+    });
+
+    // Dodawanie użytkownika
+    document.getElementById('user-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const user = {
+            name: formData.get('name'),
+            surname: formData.get('surname'),
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+        fetch('/add-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        }).then(res => {
+            alert(res.ok ? 'Użytkownik dodany!' : 'Błąd przy dodawaniu użytkownika.');
+            if (res.ok) {
+                this.reset();
+            }
+        });
+    });
+
+    // Dodawanie książki
+    document.getElementById('book-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const book = {
+            title: formData.get('title'),
+            author: formData.get('author'),
+            available: true
+        };
+        fetch('/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(book)
+        }).then(res => {
+            alert(res.ok ? 'Książka dodana!' : 'Błąd przy dodawaniu książki.');
+            if (res.ok) {
+                this.reset();
+                loadBooks(currentSortField);  // odśwież listę po dodaniu książki
+            }
+        });
+    });
+
+    // Przejście do profilu użytkownika
+    document.getElementById('user-redirect').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('user-select-redirect').value;
+        if (userId) {
+            window.location.href = `user.html?id=${userId}`;
+        }
+    });
+
+    // Funkcja do pokazywania/ukrywania sekcji
+    function toggleSection(id) {
+        const section = document.getElementById(id);
+        section.style.display = (section.style.display === 'none' || section.style.display === '') ? 'block' : 'none';
+    }
+    document.getElementById('availability-filter').addEventListener('click', () => {
+        if (availabilityFilter === 'all') {
+            availabilityFilter = 'available';
+        } else if (availabilityFilter === 'available') {
+            availabilityFilter = 'borrowed';
+        } else {
+            availabilityFilter = 'all';
+        }
+        updateAvailabilityFilterText();
+        renderBooksTable();
+    });
+
+    function updateAvailabilityFilterText() {
+        const btn = document.getElementById('availability-filter');
+        if (availabilityFilter === 'all') {
+            btn.textContent = 'Wszystkie';
+        } else if (availabilityFilter === 'available') {
+            btn.textContent = 'Tylko dostępne';
+        } else if (availabilityFilter === 'borrowed') {
+            btn.textContent = 'Tylko wypożyczone';
+        }
+        btn.style.maxWidth = '130px'; // wymusz minimalną szerokość
+    }
+
+</script>
+
+</body>
+</html>

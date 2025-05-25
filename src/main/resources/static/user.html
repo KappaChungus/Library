@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Użytkownik – Szczegóły</title>
+    <style>
+        .overdue {
+            background-color: #f8d7da !important;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #eee;
+        }
+
+        button {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Dane użytkownika</h1>
+<p id="user-info">Ładowanie danych...</p>
+
+<h2>Wypożyczenia</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Tytuł</th>
+        <th>Autor</th>
+        <th>Data wypożyczenia</th>
+        <th>Data zwrotu</th>
+        <th id="action-header">Akcja</th>
+    </tr>
+    </thead>
+    <tbody id="borrowings-table">
+    <tr>
+        <td colspan="5">Ładowanie wypożyczeń...</td>
+    </tr>
+    </tbody>
+</table>
+<h2 id="borrow-header">Dodaj nowe wypożyczenie</h2>
+<form id="borrow-form">
+    <label for="book-search">Szukaj książki:</label>
+    <input type="text" id="book-search" placeholder="Wpisz tytuł..." list="book-options" required>
+    <datalist id="book-options"></datalist>
+
+    <label for="due-date">Data zwrotu:</label>
+    <input type="date" id="due-date" required>
+
+    <button type="submit">Wypożycz</button>
+</form>
+
+
+<script>
+    const token = localStorage.getItem('jwtToken');
+    let userRole = null;
+    let srcId = null;
+
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userRole = payload.role;
+            srcId = String(payload.id);
+        } catch (e) {
+            console.error('Nieprawidłowy token JWT');
+        }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
+
+    if (!userId) {
+        document.getElementById('user-info').textContent = 'Brak ID użytkownika w URL.';
+        throw new Error('Brak ID');
+    }
+
+    if (userRole === 'user' && String(userId) !== srcId) {
+        alert('Brak uprawnień do odwiedzenia tej strony');
+        window.location.href = '/user.html?id=' + srcId;
+    }
+
+    // Dane użytkownika
+    fetch('/users')
+        .then(res => res.json())
+        .then(users => {
+            const user = users.find(u => u.id == userId);
+            if (user) {
+                document.getElementById('user-info').innerHTML = `
+                <strong>Imię:</strong> ${user.name || ''}<br>
+                <strong>Nazwisko:</strong> ${user.surname || ''}<br>
+                <strong>Email:</strong> ${user.email}
+            `;
+            } else {
+                document.getElementById('user-info').textContent = 'Nie znaleziono użytkownika.';
+            }
+        });
+
+    // Wypożyczenia użytkownika
+    fetch(`/borrowings/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('borrowings-table');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${userRole === 'admin' ? 5 : 4}">Brak wypożyczeń.</td></tr>`;
+                return;
+            }
+
+            data.forEach(b => {
+                const row = document.createElement('tr');
+
+                const today = new Date().toISOString().split('T')[0];
+                const isOverdue = b.dueDate < today;
+
+                if (isOverdue) {
+                    row.style.backgroundColor = '#f8d7da'; // jasnoczerwone tło
+                }
+
+                let rowHTML = `
+                    <td>${b.book.title}</td>
+                    <td>${b.book.author}</td>
+                    <td>${b.borrowDate}</td>
+                    <td id="due-${b.book.id}">${b.dueDate}</td>
+                `;
+
+                if (userRole === 'admin') {
+                    rowHTML += `
+                    <td>
+                        <button onclick="returnBook(${userId}, ${b.book.id})">Zwróć</button>
+                        <button onclick="showExtendInput(${userId}, ${b.book.id})">Przedłuż</button>
+                        <div id="extend-${b.book.id}" style="display:none; margin-top:5px;">
+                            <input type="date" id="newDate-${b.book.id}">
+                            <button onclick="extendBorrowing(${userId}, ${b.book.id})">OK</button>
+                        </div>
+                    </td>
+                    `;
+                }
+
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+        });
+
+    function returnBook(userId, bookId) {
+        if (!confirm('Na pewno chcesz zwrócić tę książkę?')) return;
+
+        fetch(`/borrowing/${userId}/${bookId}`, {
+            method: 'DELETE'
+        }).then(res => {
+            if (res.ok) {
+                alert('Książka zwrócona!');
+                location.reload();
+            } else {
+                alert('Błąd przy zwracaniu książki.');
+            }
+        });
+    }
+
+    function showExtendInput(userId, bookId) {
+        document.getElementById(`extend-${bookId}`).style.display = 'block';
+
+        const today = new Date();
+        const defaultDate = new Date(today);
+        defaultDate.setDate(today.getDate() + 14);
+        document.getElementById(`newDate-${bookId}`).value = defaultDate.toISOString().split('T')[0];
+    }
+
+    function extendBorrowing(userId, bookId) {
+        const newDate = document.getElementById(`newDate-${bookId}`).value;
+        if (!newDate) {
+            alert('Wybierz nową datę!');
+            return;
+        }
+
+        fetch(`/borrowing/${userId}/${bookId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newDate)
+        }).then(res => {
+            if (res.ok) {
+                alert('Termin przedłużony!');
+                document.getElementById(`due-${bookId}`).textContent = newDate;
+                document.getElementById(`extend-${bookId}`).style.display = 'none';
+                location.reload();
+            } else {
+                alert('Błąd przy przedłużaniu.');
+            }
+        });
+    }
+
+    let availableBooks = [];
+
+    fetch('/available-books')
+        .then(res => res.json())
+        .then(data => {
+            availableBooks = data;
+            const datalist = document.getElementById('book-options');
+            datalist.innerHTML = ''; // czyścimy poprzednie opcje
+            data.forEach(book => {
+                const option = document.createElement('option');
+                option.value = book.title;
+                option.label = `${book.title} – ${book.author}`;
+                datalist.appendChild(option);
+            });
+        });
+
+    // Domyślna data zwrotu = 14 dni od dziś
+    const dueInput = document.getElementById('due-date');
+    const today = new Date();
+    const plus14 = new Date();
+    plus14.setDate(today.getDate() + 14);
+    dueInput.value = plus14.toISOString().split('T')[0];
+
+    document.getElementById('borrow-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const title = document.getElementById('book-search').value;
+        const dueDate = document.getElementById('due-date').value;
+
+        const selectedBook = availableBooks.find(book => book.title.toLowerCase() === title.toLowerCase());
+        if (!selectedBook) {
+            alert('Nie znaleziono dostępnej książki o podanym tytule.');
+            return;
+        }
+
+        const borrow = {
+            userId: userId,
+            bookId: selectedBook.id,
+            dueDate: dueDate
+        };
+
+        fetch('/borrow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(borrow)
+        }).then(res => {
+            if (res.ok) {
+                alert('Wypożyczenie dodane!');
+                location.reload();
+            } else {
+                res.text().then(txt => alert('Błąd: ' + txt));
+            }
+        });
+    });
+
+    // Ukryj akcje i formularz dla zwykłych użytkowników
+    if (userRole !== 'admin') {
+        document.getElementById('borrow-form').style.display = 'none';
+        document.getElementById('action-header').style.display = 'none';
+        document.getElementById('borrow-header').style.display = 'none';
+        const table = document.querySelector('table');
+        const headerRow = table.querySelector('thead tr');
+        if (headerRow) headerRow.lastElementChild.style.display = 'none';
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (row.children.length === 5) {
+                row.lastElementChild.style.display = 'none';
+            }
+        });
+    }
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logowanie</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background: #f9f9f9;
+      flex-direction: column;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 300px;
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+  <link id="dark-mode-style" rel="stylesheet" href="/dark-mode.css" disabled>
+</head>
+<body>
+
+<button id="dark-mode-toggle">Tryb ciemny</button>
+
+<form id="login-form">
+  <h2>Logowanie</h2>
+  <input type="email" name="email" placeholder="Email" required />
+  <input type="password" name="password" placeholder="Hasło" required />
+  <button type="submit">Zaloguj się</button>
+  <div class="error" id="error-msg"></div>
+</form>
+
+<script>
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const darkModeLink = document.getElementById('dark-mode-style');
+
+  darkModeToggle.addEventListener('click', () => {
+    if (darkModeLink.disabled) {
+      darkModeLink.disabled = false;
+      document.body.classList.add('dark-mode');
+      darkModeToggle.textContent = '☀️';  // ikona słońca gdy włączony dark mode
+    } else {
+      darkModeLink.disabled = true;
+      document.body.classList.remove('dark-mode');
+      darkModeToggle.textContent = '🌙';  // ikona księżyca gdy wyłączony dark mode
+    }
+  });
+
+
+  // Przy ładowaniu strony sprawdzamy preferencje użytkownika
+  window.addEventListener('load', () => {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      darkModeStyle.disabled = false;
+      darkModeToggle.classList.add('active');
+      darkModeToggle.textContent = 'Tryb jasny';
+    }
+  });
+
+  document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const body = {
+      email: formData.get('email'),
+      password: formData.get('password')
+    };
+
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        throw new Error('Nieprawidłowe dane logowania');
+      }
+      const data = await res.json();
+      localStorage.setItem('jwtToken', data.token);
+
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+
+      if (payload.role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'user.html?id=' + payload.id;
+      }
+
+    } catch (err) {
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  });
+</script>
+
+</body>
+</html>

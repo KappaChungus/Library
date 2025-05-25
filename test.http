@@ -1,0 +1,47 @@
+### GET request to example server
+
+GET http://localhost:8080/available-books
+###
+
+GET http://localhost:8080/users
+
+###
+POST http://localhost:8080/book
+Content-Type: application/json
+
+{
+  "title": "Wiedźmin",
+  "author": "Andrzej Sapkowski",
+  "available": true
+}
+###
+POST http://localhost:8080/add-user
+Content-Type: application/json
+
+{
+  "name": "admin",
+  "surname": "admin",
+  "email": "admin@admin",
+  "password": "admin",
+  "role": "admin"
+}
+###
+
+POST http://localhost:8080/borrow
+Content-Type: application/json
+
+{
+  "bookId": 1,
+  "userId": 1,
+  "dueDate": "2025-05-30"
+}
+###
+
+GET http://localhost:8080/borrowings
+###
+
+GET http://localhost:8080/borrowings/1
+
+###
+PUT http://localhost:8080/book/2
+
