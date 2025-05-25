@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/data")
 public class LibraryController {
     private final BookRepository bookRepository;
     private final BorrowingRepository borrowingRepository;
@@ -40,19 +41,21 @@ public class LibraryController {
     }
 
 
-
     @GetMapping("/users")
     public List<User> getUsers() {
         return userRepository.findAll();
     }
+
     @GetMapping("/available-books")
     public List<Book> getBorrowedBooks() {
         return bookRepository.findByAvailableTrue();
     }
+
     @GetMapping("/borrowings")
     public List<Borrowing> getBorrowings() {
         return borrowingRepository.findAll();
     }
+
     @GetMapping("/borrowings/{id}")
     public List<Borrowing> getBorrowings(@PathVariable Long id) {
         return borrowingRepository.findAllByUserId(id);
@@ -63,6 +66,7 @@ public class LibraryController {
     public void addBook(@RequestBody Book book) {
         bookRepository.save(book);
     }
+
     @PostMapping("/borrow")
     public ResponseEntity<String> borrowBook(@RequestBody BorrowRequest request) {
         Book book = bookRepository.findById(request.getBookId()).orElse(null);
@@ -89,10 +93,12 @@ public class LibraryController {
 
         return ResponseEntity.ok("Book borrowed successfully");
     }
+
     @PostMapping("/add-user")
     public void addUser(@RequestBody User user) {
         userRepository.save(user);
     }
+
     @DeleteMapping("/borrowing/{userId}/{bookId}")
     public void deleteBorrowing(@PathVariable Long userId, @PathVariable Long bookId) {
         Borrowing borrowing = borrowingRepository.findByUserIdAndBookId(userId, bookId);
@@ -122,6 +128,7 @@ public class LibraryController {
         borrowingRepository.save(borrowing);
         return ResponseEntity.ok("Termin zwrotu przedłużony");
     }
+
     @PutMapping("/book/{id}")
     public ResponseEntity<String> returnBook(@PathVariable Long id) {
         Book book = bookRepository.findById(id).orElse(null);
@@ -132,6 +139,7 @@ public class LibraryController {
         bookRepository.save(book);
         return ResponseEntity.ok("xd");
     }
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody User request) {
         User user = userRepository.getFirstByEmail(request.getEmail());
@@ -141,7 +149,7 @@ public class LibraryController {
                     .body(Map.of("error", "Invalid email or password"));
         }
 
-        String token = JwtUtil.generateToken(user.getEmail(), user.getRole(),user.getId());
+        String token = JwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId());
 
         return ResponseEntity.ok(Map.of("token", token));
     }
