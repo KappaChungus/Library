@@ -52,6 +52,7 @@ body.dark-mode th {
 
 body.dark-mode .overdue {
     background-color: #8b3b3f !important; /* ciemniejszy odcień czerwieni */
+    color: #fff !important; /* jasny kolor tekstu dla kontrastu */
 }
 
 body.dark-mode button {

@@ -89,7 +89,7 @@
     });
 
     // Dane użytkownika
-    fetch('/users')
+    fetch('/data/users')
         .then(res => res.json())
         .then(users => {
             const user = users.find(u => u.id == userId);
@@ -105,7 +105,7 @@
         });
 
     // Wypożyczenia użytkownika
-    fetch(`/borrowings/${userId}`)
+    fetch(`/data/borrowings/${userId}`)
         .then(res => res.json())
         .then(data => {
             const tbody = document.getElementById('borrowings-table');
@@ -123,7 +123,7 @@
                 const isOverdue = b.dueDate < today;
 
                 if (isOverdue) {
-                    row.style.backgroundColor = '#f8d7da'; // jasnoczerwone tło
+                    row.classList.add('overdue');
                 }
 
                 let rowHTML = `
@@ -154,7 +154,7 @@
     function returnBook(userId, bookId) {
         if (!confirm('Na pewno chcesz zwrócić tę książkę?')) return;
 
-        fetch(`/borrowing/${userId}/${bookId}`, {
+        fetch(`/data/borrowing/${userId}/${bookId}`, {
             method: 'DELETE'
         }).then(res => {
             if (res.ok) {
@@ -182,7 +182,7 @@
             return;
         }
 
-        fetch(`/borrowing/${userId}/${bookId}`, {
+        fetch(`/data/borrowing/${userId}/${bookId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newDate)
@@ -200,7 +200,7 @@
 
     let availableBooks = [];
 
-    fetch('/available-books')
+    fetch('/data/available-books')
         .then(res => res.json())
         .then(data => {
             availableBooks = data;
@@ -238,7 +238,7 @@
             dueDate: dueDate
         };
 
-        fetch('/borrow', {
+        fetch('/data/borrow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(borrow)

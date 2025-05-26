@@ -108,7 +108,7 @@
         }
 
         // Ładowanie użytkowników do selecta
-        fetch('/users')
+        fetch('/data/users')
             .then(res => res.json())
             .then(users => {
                 const userRedirectSelect = document.getElementById('user-select-redirect');
@@ -139,7 +139,7 @@
 
     // Funkcja ładująca książki z backendu
     function loadBooks(sortBy = 'title') {
-        fetch(`/books?sortBy=${sortBy}`)
+        fetch(`/data/books?sortBy=${sortBy}`)
             .then(res => res.json())
             .then(books => {
                 allBooks = books;
@@ -224,7 +224,7 @@
             email: formData.get('email'),
             password: formData.get('password')
         };
-        fetch('/add-user', {
+        fetch('/data/add-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user)
@@ -245,7 +245,7 @@
             author: formData.get('author'),
             available: true
         };
-        fetch('/book', {
+        fetch('/data/book', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(book)

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/data")
 public class LibraryController {
     private final BookRepository bookRepository;
     private final BorrowingRepository borrowingRepository;
